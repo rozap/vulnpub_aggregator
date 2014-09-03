@@ -2,8 +2,8 @@ import requests
 
 class APIClient(object):
 
-    def __init__(self, username, apikey, server = 'http://localhost:4000'):
-        print "Client init as %s:%s" % (username, apikey)
+    def __init__(self, username, apikey, server):
+        print "Client init as %s:%s --> %s" % (username, apikey, server)
         self.username = username
         self.apikey = apikey
         self.server = server
