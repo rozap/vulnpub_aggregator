@@ -42,9 +42,9 @@ class Ubuntu(Scraper):
         for dd in dl.find_all('dd'):
             [package, version] = dd.find_all('a')
 
-            effected_version = '<' + version.text
-            print package.text, effected_version
-            self.client.enter_vuln(package.text, effected_version, name, description, link)
+            patched_version = '>=' + version.text
+            print package.text, patched_version
+            self.client.enter_vuln(package.text, patched_version, name, description, link)
 
     def run(self):
         for num in range(1, 60):

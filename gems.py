@@ -37,7 +37,10 @@ class Gems(Scraper):
     def run(self):
         name = 'ruby-advisory-db'
         location = '/tmp/ruby-vulns'
-        shutil.rmtree(location)
+        try:
+            shutil.rmtree(location)
+        except:
+            pass
         proc = Popen(['git', 'clone', 'https://github.com/rubysec/%s.git' % name, location])
         proc.wait()
         for root, dirs, files in os.walk(os.path.join(location, 'gems')):

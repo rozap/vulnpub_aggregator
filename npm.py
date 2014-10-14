@@ -21,15 +21,15 @@ class NPM(Scraper):
             right = advisory.find('div', {'class' : 'advisory-right'})
 
             effects_package = right.find('div', {'class' : 'module-name'}).text
-            effects_version = right.find_all('div', {'class' : 'module-version'})[0].text.split(':')[1]
-            effects_version = max(effects_version.split('||')).strip().replace(' ', '')
-            qualifiers = ['<', '>', '=', '~', '^']
-            if not effects_version[0] in qualifiers:
-                #default to less than version qualifier
-                effects_version = '<' + effects_version
-
-            # description = self.get_description('https://nodesecurity.io%s' % external_link)
+            
             description = 'See external link'
 
-            self.client.enter_vuln(effects_package, effects_version, name, description, external_link)
+            patched_versions = right.find_all('div', {'class' : 'module-version'})[1].text.split(':')[1]
+            patched_versions = patched_versions.split('||')
+            # description = self.get_description('https://nodesecurity.io%s' % external_link)
+
+            for version in patched_versions:
+                self.client.enter_vuln(effects_package, version, name, description, external_link)
+
+
 
