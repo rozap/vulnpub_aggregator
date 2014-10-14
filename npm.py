@@ -11,7 +11,7 @@ class NPM(Scraper):
 
 
     def run(self):
-        body = requests.get('https://nodesecurity.io/advisories').text
+        body = requests.get('https://nodesecurity.io/advisories', verify = False).text
         soup = BeautifulSoup(body)
         for advisory in soup.find_all('li', {'class' : 'advisory'}):
             advisory_title = advisory.find('div', {'class' : 'advisory-title'})

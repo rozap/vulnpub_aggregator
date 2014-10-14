@@ -3,6 +3,7 @@ from api import APIClient
 
 from ubuntu import Ubuntu
 from npm import NPM
+from gems import Gems
 
 def main():
     try:
@@ -19,7 +20,8 @@ def main():
         return
 
     client = APIClient(username, apikey, server)
-    scrapers = [NPM(client), Ubuntu(client)]
+    # scrapers = [NPM(client), Ubuntu(client)]
+    scrapers = [Gems(client)]
     results = [s.run() for s in scrapers]
     
 

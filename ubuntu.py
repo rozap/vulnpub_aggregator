@@ -47,7 +47,7 @@ class Ubuntu(Scraper):
             self.client.enter_vuln(package.text, effected_version, name, description, link)
 
     def run(self):
-        for num in range(1, 20):
+        for num in range(1, 60):
             body = requests.get('http://www.ubuntu.com/usn/?page=%s' % num).text
             soup = BeautifulSoup(body)
             advisories = [a for a in soup.find_all('a') if self.is_advisory(a)]

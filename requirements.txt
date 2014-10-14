@@ -1,3 +1,4 @@
 requests
 pyquery
 beautifulsoup4
+pyyaml
