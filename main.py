@@ -21,6 +21,7 @@ def main():
 
     client = APIClient(username, apikey, server)
     scrapers = [NPM(client), Ubuntu(client), Gems(client)]
+    # scrapers = [Ubuntu(client)]
 
     results = [s.run() for s in scrapers]
     

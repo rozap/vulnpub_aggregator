@@ -1,4 +1,5 @@
 import requests
+import json
 
 class APIClient(object):
 
@@ -11,7 +12,8 @@ class APIClient(object):
 
     def get_headers(self):
         return {
-            'authentication' : '%s:%s' % (self.username, self.apikey)
+            'authentication' : '%s:%s' % (self.username, self.apikey),
+            'Content-Type' : 'application/json'
         }
 
 
@@ -23,21 +25,32 @@ class APIClient(object):
         {
             "description": "foo",
             "name": "baz",
-            "effects_package": "some-package-name",
-            "effects_version": "4.20",
+            "effects" : [
+                {
+                    "name": "some-package-name",
+                    "version": "4.2.0",
+                    "vulnerable": true
+                },
+                {
+                    "name": "some-package-name",
+                    "version": "5.0.0",
+                    "vulnerable": false
+                },
+
+            ],
             "external_link": "http://some-blog/post"
         }
     """
-    def enter_vuln(self, package, version, name, description, external_link):
-        print "Sending vuln: %s :: %s" % (package, version)
-        data = {
-            'effects_version' : version, 
-            'effects_package' : package,
+    def enter_vuln(self, name, effects, description, external_link):
+        print "Sending vuln: %s | %s" % (name, ', '.join([e['version'] for e in effects]))
+        data = json.dumps({
+            'effects' : effects,
             'external_link' : external_link,
             'description' : description, 
             'name' : name
-        }
-        resp = requests.post(self.api('vulns'), data = data, headers = self.get_headers()).text
-        # print resp
+        })
+        resp = requests.post(self.api('vulns'), data = data, headers = self.get_headers())
+        if resp.status_code != 201:
+            print resp.text
         return resp
 

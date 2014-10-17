@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from scraper import Scraper
+from multiprocessing.pool import ThreadPool
 
 class Ubuntu(Scraper):
 
@@ -15,6 +16,18 @@ class Ubuntu(Scraper):
         [usn, usn_num] = toks[0:2]
         return usn == "usn" and re.match('usn\-\d+\-\d+', usn_num)
 
+
+    def get_version(self, text):
+        matches = re.match('.*(\d+\.\d+\.\d+).*', text)
+        if matches:
+            return '>=' + matches.group(1)
+
+        matches = re.match('.*(\d+\.\d+).*', text)
+        if matches:
+            return '>=' + matches.group(1) + '.0'
+
+
+        print "Cannot parse version %s" % text
 
     def get_advisory(self, link):
         body = requests.get(link).text
@@ -37,24 +50,31 @@ class Ubuntu(Scraper):
 
 
         name = (':'.join(name.strip().split(':')[1:])).strip()
+        name = name + ': ' + h3s[1].find_next_sibling().text.strip()
 
+        effects = []
         dl = soup.find('dl')
         for dd in dl.find_all('dd'):
             [package, version] = dd.find_all('a')
 
-            patched_version = '>=' + version.text
-            print package.text, patched_version
-            self.client.enter_vuln(package.text, patched_version, name, description, link)
+            effects.append({
+                    'vulnerable' : False,
+                    'name' : package.text,
+                    'version' : self.get_version(version.text)
+                })
+            # effects = [e for e in effects if e['version']]
+        self.client.enter_vuln(name, effects, description, link)
 
     def run(self):
         for num in range(1, 60):
             body = requests.get('http://www.ubuntu.com/usn/?page=%s' % num).text
             soup = BeautifulSoup(body)
             advisories = [a for a in soup.find_all('a') if self.is_advisory(a)]
-            for a in advisories:
-                href = a.get('href').strip('/') + '/'
-                print 'http://www.ubuntu.com/%s' % href
-                self.get_advisory('http://www.ubuntu.com/%s' % href)
+            links = ['http://www.ubuntu.com/%s' % a.get('href').strip('/') + '/' for a in advisories]
+
+            pool = ThreadPool(processes=len(advisories))
+            pool.map(self.get_advisory, links)
+
             
 
 

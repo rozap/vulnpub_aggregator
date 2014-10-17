@@ -10,6 +10,13 @@ class NPM(Scraper):
         return soup.find('div', {'class' : 'advisory-description'}).text
 
 
+    def get_version(self, right, idx = 0):
+        return right.find_all('div', {'class' : 'module-version'})[idx].text\
+            .split(':')[1]\
+            .replace('x', '0')\
+            .strip()
+
+
     def run(self):
         body = requests.get('https://nodesecurity.io/advisories', verify = False).text
         soup = BeautifulSoup(body)
@@ -17,6 +24,7 @@ class NPM(Scraper):
             advisory_title = advisory.find('div', {'class' : 'advisory-title'})
             name = advisory_title.text
             external_link = advisory_title.find('a').get('href')
+            external_link = 'https://nodesecurity.io%s' % external_link
 
             right = advisory.find('div', {'class' : 'advisory-right'})
 
@@ -24,12 +32,23 @@ class NPM(Scraper):
             
             description = 'See external link'
 
-            patched_versions = right.find_all('div', {'class' : 'module-version'})[1].text.split(':')[1]
-            patched_versions = patched_versions.split('||')
+            vulnerable_version = self.get_version(right, 0)
+            patched_version = self.get_version(right, 1)
             # description = self.get_description('https://nodesecurity.io%s' % external_link)
+            effects = [
+                {
+                    'name' : effects_package,
+                    'version' : patched_version,
+                    'vulnerable' : False
+                },
+                {
+                    'name' : effects_package,
+                    'version' : vulnerable_version,
+                    'vulnerable' : True
+                }
 
-            for version in patched_versions:
-                self.client.enter_vuln(effects_package, version, name, description, external_link)
+            ]
+            self.client.enter_vuln(name, effects, description, external_link)
 
 
 

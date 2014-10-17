@@ -7,18 +7,22 @@ import yaml
 
 class Gems(Scraper):
 
-    ruby_to_node = {
-        '~>' : '~'
+    qualifiers = {
+        '=' : '=='
     }
-
-    def get_description(self, link):
-        return "foo"
 
     def convert_version(self, version):
         version = version[1:].replace('"', '').replace("'", '').strip()
-        for key, val in self.ruby_to_node.iteritems():
-            version = version.replace(key, val)
+        for old, new in self.qualifiers.iteritems():
+            version = version.replace(old, new)
         return version
+
+    def make_effect(self, package_name, v, vulnerable):
+        return {
+            'vulnerable' : vulnerable,
+            'name' : package_name,
+            'version' : self.convert_version(v)
+        }
 
     def parse_entry(self, vuln):
         if not vuln.get('patched_versions', False):
@@ -27,12 +31,11 @@ class Gems(Scraper):
         name = vuln['title']
         description = vuln['description']
         url = vuln['url']
+
         package_name = vuln['gem']
-
-        versions = [self.convert_version(v) for v in vuln['patched_versions']]
-
-        for version in versions:
-            self.client.enter_vuln(package_name, version, name, description, url)
+        effects = [self.make_effect(package_name, v, False) for v in vuln['patched_versions']] + \
+        [self.make_effect(package_name, v, False) for v in vuln.get('unaffected_versions', [])] 
+        resp = self.client.enter_vuln(name, effects, description, url)
 
     def run(self):
         name = 'ruby-advisory-db'
