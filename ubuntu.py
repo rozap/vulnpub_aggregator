@@ -30,40 +30,43 @@ class Ubuntu(Scraper):
         print "Cannot parse version %s" % text
 
     def get_advisory(self, link):
-        body = requests.get(link).text
-        soup = BeautifulSoup(body)
+        try:
+            body = requests.get(link).text
+            soup = BeautifulSoup(body)
 
-        name = soup.find('h1').text
-        h3s = soup.find_all('h3')
+            name = soup.find('h1').text
+            h3s = soup.find_all('h3')
 
-        description = name + '\n'
-        for h3 in h3s:
-            if h3.text.lower() == 'details':
-                p = h3.find_next_sibling()
-                while True:
-                    description += ('\n\n' + p.text)
-                    p = p.find_next_sibling()
-                    if p.name != 'p':
-                        break
-
-
+            description = name + '\n'
+            for h3 in h3s:
+                if h3.text.lower() == 'details':
+                    p = h3.find_next_sibling()
+                    while True:
+                        description += ('\n\n' + p.text)
+                        p = p.find_next_sibling()
+                        if p.name != 'p':
+                            break
 
 
-        name = (':'.join(name.strip().split(':')[1:])).strip()
-        name = name + ': ' + h3s[1].find_next_sibling().text.strip()
 
-        effects = []
-        dl = soup.find('dl')
-        for dd in dl.find_all('dd'):
-            [package, version] = dd.find_all('a')
 
-            effects.append({
-                    'vulnerable' : False,
-                    'name' : package.text,
-                    'version' : self.get_version(version.text)
-                })
-            # effects = [e for e in effects if e['version']]
-        self.client.enter_vuln(name, effects, description, link)
+            name = (':'.join(name.strip().split(':')[1:])).strip()
+            name = name + ': ' + h3s[1].find_next_sibling().text.strip()
+
+            effects = []
+            dl = soup.find('dl')
+            for dd in dl.find_all('dd'):
+                [package, version] = dd.find_all('a')
+
+                effects.append({
+                        'vulnerable' : False,
+                        'name' : package.text,
+                        'version' : self.get_version(version.text)
+                    })
+                # effects = [e for e in effects if e['version']]
+            self.client.enter_vuln(name, effects, description, link)
+        except:
+            print "shit.."
 
     def run(self):
         for num in range(1, 60):
